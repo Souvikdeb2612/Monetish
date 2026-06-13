@@ -51,6 +51,7 @@ export const ICONS = {
   at: '<circle cx="12" cy="12" r="4"/><path d="M16 12v1.5a2.5 2.5 0 005 0V12a9 9 0 10-3.5 7.1"/>',
   filter: '<path d="M3 5h18l-7 8v5l-4 2v-7z"/>',
   copy: '<rect x="8" y="8" width="12" height="12" rx="2.5"/><path d="M16 8V6a2 2 0 00-2-2H6a2 2 0 00-2 2v8a2 2 0 002 2h2"/>',
+  logout: '<path d="M10 4H6a2 2 0 00-2 2v12a2 2 0 002 2h4"/><path d="M14 8l4 4-4 4"/><path d="M18 12H9"/>',
 };
 
 export function Icon({ name, size = 22, color = 'currentColor', sw = 1.9, fill = 'none', style }) {

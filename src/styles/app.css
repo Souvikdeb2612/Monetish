@@ -209,6 +209,15 @@ textarea.sk-input { resize: vertical; padding-top: 12px; min-height: 96px; line-
   display: flex; align-items: center; gap: 10px;
   padding: 10px 8px; border-radius: 12px;
 }
+.side__logout {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 32px; height: 32px; border-radius: 10px;
+  background: transparent; color: var(--t2);
+  border: 1px solid var(--line); cursor: pointer;
+  transition: background .15s ease, color .15s ease, border-color .15s ease;
+  flex: 0 0 auto;
+}
+.side__logout:hover { background: var(--card-2); color: var(--coral); border-color: var(--coral); }
 
 /* topbar -------------------------------------------------------------- */
 .top {

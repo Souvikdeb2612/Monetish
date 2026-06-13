@@ -123,9 +123,10 @@ function SettingsRow({ icon, title, value, ok, onClick }) {
 
 export function Settings() {
   const nav = useNavigate();
-  const { state, reset } = useStore();
+  const { state, reset, set } = useStore();
   const { profile } = state;
   const restart = () => { if (confirm('Reset all demo data and restart onboarding?')) { reset(); nav('/signup'); } };
+  const signOut = () => { set({ onboarded: false }); nav('/signup'); };
 
   return (
     <div className="grid" style={{ gridTemplateColumns: 'minmax(0, 1fr) 360px', gap: 32, alignItems: 'start' }}>
@@ -154,16 +155,27 @@ export function Settings() {
           </div>
         </div>
 
-        {/* danger */}
+        {/* account / danger */}
         <div>
-          <div className="section-title"><h2>Demo</h2></div>
-          <div className="sk-card" style={{ padding: 18, display: 'flex', alignItems: 'center', gap: 14 }}>
-            <Icon name="trash" size={20} color="var(--coral)" />
-            <div style={{ flex: 1 }}>
-              <div style={{ fontWeight: 800, fontSize: 14.5 }}>Restart demo</div>
-              <div style={{ fontSize: 13, color: 'var(--t2)' }}>Resets all data and sends you back to onboarding.</div>
+          <div className="section-title"><h2>Account</h2></div>
+          <div className="sk-card" style={{ padding: 0, overflow: 'hidden' }}>
+            <div style={{ padding: 18, display: 'flex', alignItems: 'center', gap: 14 }}>
+              <div className="sk-itile" style={{ width: 40, height: 40, background: 'var(--card-2)', borderRadius: 11 }}><Icon name="logout" size={20} color="var(--t1)" /></div>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontWeight: 800, fontSize: 14.5 }}>Sign out</div>
+                <div style={{ fontSize: 13, color: 'var(--t2)' }}>Returns you to the login screen. Your data stays saved.</div>
+              </div>
+              <button className="sk-btn sk-btn--ghost sk-btn--sm" onClick={signOut}>Sign out</button>
             </div>
-            <button className="sk-btn sk-btn--ghost sk-btn--sm" onClick={restart} style={{ color: 'var(--coral)' }}>Restart</button>
+            <div className="sk-hr" />
+            <div style={{ padding: 18, display: 'flex', alignItems: 'center', gap: 14 }}>
+              <div className="sk-itile" style={{ width: 40, height: 40, background: 'var(--card-2)', borderRadius: 11 }}><Icon name="trash" size={20} color="var(--coral)" /></div>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontWeight: 800, fontSize: 14.5 }}>Restart demo</div>
+                <div style={{ fontSize: 13, color: 'var(--t2)' }}>Wipes all data and sends you back to onboarding.</div>
+              </div>
+              <button className="sk-btn sk-btn--ghost sk-btn--sm" onClick={restart} style={{ color: 'var(--coral)' }}>Restart</button>
+            </div>
           </div>
         </div>
 

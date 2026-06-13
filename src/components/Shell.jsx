@@ -19,8 +19,9 @@ const PAGE_META = {
 };
 
 function Sidebar({ page }) {
-  const { state } = useStore();
+  const { state, set } = useStore();
   const nav = useNavigate();
+  const signOut = () => { set({ onboarded: false }); nav('/signup'); };
   return (
     <aside className="side">
       <div className="side__brand"><BrandMark size={22} /></div>
@@ -52,10 +53,13 @@ function Sidebar({ page }) {
 
         <div className="side__user">
           <Avatar size={36} label={(state.profile.displayName[0] || 'A').toUpperCase()} bg="var(--ink)" color="var(--lime)" />
-          <div style={{ minWidth: 0 }}>
+          <div style={{ minWidth: 0, flex: 1 }}>
             <div style={{ fontWeight: 800, fontSize: 13.5, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{state.profile.displayName}</div>
             <div style={{ fontSize: 12, color: 'var(--t2)' }}>Creator · ₹499/mo</div>
           </div>
+          <button className="side__logout" onClick={signOut} title="Sign out" aria-label="Sign out">
+            <Icon name="logout" size={18} sw={2} />
+          </button>
         </div>
       </div>
     </aside>
