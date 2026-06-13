@@ -4,7 +4,7 @@
 
 import { Hono } from 'hono';
 import { handle } from 'hono/vercel';
-import { clerkMiddleware, getAuth } from '@hono/clerk-auth';
+import { StackServerApp } from '@stackframe/js';
 import { and, asc, eq } from 'drizzle-orm';
 import { db, schema } from '../db/client.js';
 
@@ -12,38 +12,48 @@ export const config = { runtime: 'nodejs' };
 
 const app = new Hono().basePath('/api');
 
-// Clerk middleware on every request. Public routes (storefront read) skip the
-// auth check inside the handler; Clerk still runs so we get a clean req.auth.
-app.use('*', clerkMiddleware());
-
-// Pull the userId from the verified Clerk session. Returns null when the
-// request is anonymous (used by public storefront route).
-function uid(c) {
-  const a = getAuth(c);
-  return a?.userId || null;
+// Lazy server-side Stack client. Constructed on first request so the function
+// boots even if keys are missing in early Phase 1.
+let _stack;
+function stack() {
+  if (_stack) return _stack;
+  _stack = new StackServerApp({
+    projectId: process.env.VITE_STACK_PROJECT_ID,
+    publishableClientKey: process.env.VITE_STACK_PUBLISHABLE_CLIENT_KEY,
+    secretServerKey: process.env.STACK_SECRET_SERVER_KEY,
+    tokenStore: 'memory',
+  });
+  return _stack;
 }
 
-// Require auth — return userId or null. Caller emits 401 when null.
-function requireUser(c) {
-  return uid(c);
+// Verify the Stack access token from `Authorization: Bearer <jwt>`. Returns
+// the Stack user id, or null when missing/invalid.
+async function uid(c) {
+  const auth = c.req.header('authorization') || '';
+  const token = auth.startsWith('Bearer ') ? auth.slice(7) : null;
+  if (!token) return null;
+  try {
+    const user = await stack().getUser({ tokenStore: { accessToken: token, refreshToken: null } });
+    return user?.id || null;
+  } catch {
+    return null;
+  }
 }
 
 app.get('/health', (c) => c.json({ ok: true }));
 
-// ───────────────────────────── Bootstrap user row
-// Called on first sign-in. Clerk owns identity; we mirror id+email into our
-// users table so blocks/profiles/etc. can FK-reference it.
+// ───────────────────────────── Bootstrap profile
+// Called on first sign-in. Neon Auth already created the user row in
+// neon_auth.users_sync, so we only need to seed a profile (username slug).
 app.post('/me/init', async (c) => {
-  const userId = requireUser(c);
+  const userId = await uid(c);
   if (!userId) return c.json({ error: 'unauthorized' }, 401);
   const body = await c.req.json().catch(() => ({}));
-  const email = body.email || '';
   const username = body.username || `creator-${userId.slice(-6)}`;
   const d = db();
-  await d.insert(schema.users).values({ id: userId, email }).onConflictDoNothing();
   await d
     .insert(schema.profiles)
-    .values({ userId, username, displayName: '', bio: '' })
+    .values({ userId, username, displayName: body.displayName || '', bio: '' })
     .onConflictDoNothing();
   return c.json({ ok: true });
 });
@@ -52,7 +62,7 @@ app.post('/me/init', async (c) => {
 // One round-trip the frontend calls on load: profile + blocks (ordered) +
 // automations. Cuts initial latency vs. three separate fetches.
 app.get('/me', async (c) => {
-  const userId = requireUser(c);
+  const userId = await uid(c);
   if (!userId) return c.json({ error: 'unauthorized' }, 401);
   const d = db();
   const [profile] = await d.select().from(schema.profiles).where(eq(schema.profiles.userId, userId));
@@ -69,7 +79,7 @@ app.get('/me', async (c) => {
 });
 
 app.put('/profile', async (c) => {
-  const userId = requireUser(c);
+  const userId = await uid(c);
   if (!userId) return c.json({ error: 'unauthorized' }, 401);
   const patch = await c.req.json();
   const d = db();
@@ -83,7 +93,7 @@ app.put('/profile', async (c) => {
 
 // ───────────────────────────── Blocks
 app.post('/blocks', async (c) => {
-  const userId = requireUser(c);
+  const userId = await uid(c);
   if (!userId) return c.json({ error: 'unauthorized' }, 401);
   const body = await c.req.json();
   const id = body.id || 'b' + Date.now().toString(36);
@@ -93,7 +103,7 @@ app.post('/blocks', async (c) => {
 });
 
 app.put('/blocks/:id', async (c) => {
-  const userId = requireUser(c);
+  const userId = await uid(c);
   if (!userId) return c.json({ error: 'unauthorized' }, 401);
   const id = c.req.param('id');
   const patch = await c.req.json();
@@ -107,7 +117,7 @@ app.put('/blocks/:id', async (c) => {
 });
 
 app.delete('/blocks/:id', async (c) => {
-  const userId = requireUser(c);
+  const userId = await uid(c);
   if (!userId) return c.json({ error: 'unauthorized' }, 401);
   const id = c.req.param('id');
   const d = db();
@@ -118,7 +128,7 @@ app.delete('/blocks/:id', async (c) => {
 // Bulk reorder — pass array of block ids in target order. We rewrite `order`
 // for each row in one transaction so the storefront reflects drag-drops.
 app.post('/blocks/reorder', async (c) => {
-  const userId = requireUser(c);
+  const userId = await uid(c);
   if (!userId) return c.json({ error: 'unauthorized' }, 401);
   const { order } = await c.req.json();
   const d = db();
@@ -135,7 +145,7 @@ app.post('/blocks/reorder', async (c) => {
 
 // ───────────────────────────── Automations
 app.post('/automations', async (c) => {
-  const userId = requireUser(c);
+  const userId = await uid(c);
   if (!userId) return c.json({ error: 'unauthorized' }, 401);
   const body = await c.req.json();
   const id = body.id || 'a' + Date.now().toString(36);
@@ -145,7 +155,7 @@ app.post('/automations', async (c) => {
 });
 
 app.put('/automations/:id', async (c) => {
-  const userId = requireUser(c);
+  const userId = await uid(c);
   if (!userId) return c.json({ error: 'unauthorized' }, 401);
   const id = c.req.param('id');
   const patch = await c.req.json();
@@ -159,7 +169,7 @@ app.put('/automations/:id', async (c) => {
 });
 
 app.delete('/automations/:id', async (c) => {
-  const userId = requireUser(c);
+  const userId = await uid(c);
   if (!userId) return c.json({ error: 'unauthorized' }, 401);
   const id = c.req.param('id');
   const d = db();

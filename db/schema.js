@@ -1,17 +1,14 @@
 import { pgTable, text, boolean, integer, timestamp, uniqueIndex } from 'drizzle-orm/pg-core';
 
-// One row per authenticated Clerk user.
-export const users = pgTable('users', {
-  id: text('id').primaryKey(),
-  email: text('email').notNull(),
-  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
-});
+// Neon Auth manages user identity in the `neon_auth.users_sync` table that
+// Neon provisions automatically — no application-side users table needed.
+// Our app tables key off the Stack user id as plain text.
 
 // Public-facing creator profile. Username is the storefront URL slug.
 export const profiles = pgTable(
   'profiles',
   {
-    userId: text('user_id').primaryKey().references(() => users.id, { onDelete: 'cascade' }),
+    userId: text('user_id').primaryKey(),
     username: text('username').notNull(),
     displayName: text('display_name').notNull().default(''),
     bio: text('bio').notNull().default(''),
@@ -35,7 +32,7 @@ export const profiles = pgTable(
 // vertical position; we renumber on reorder rather than relying on insertion.
 export const blocks = pgTable('blocks', {
   id: text('id').primaryKey(),
-  userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  userId: text('user_id').notNull(),
   type: text('type').notNull(),
   title: text('title').notNull().default(''),
   meta: text('meta').notNull().default(''),
@@ -53,7 +50,7 @@ export const blocks = pgTable('blocks', {
 // fans straight to a purchase.
 export const automations = pgTable('automations', {
   id: text('id').primaryKey(),
-  userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  userId: text('user_id').notNull(),
   keyword: text('keyword').notNull().default(''),
   dm: text('dm').notNull().default(''),
   productId: text('product_id'),
