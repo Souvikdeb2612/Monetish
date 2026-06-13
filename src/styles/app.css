@@ -190,14 +190,21 @@ textarea.sk-input { resize: vertical; padding-top: 12px; min-height: 96px; line-
 .side__foot { margin-top: auto; }
 .side__live {
   background: var(--ink); color: var(--on-ink); border-radius: var(--r-lg);
-  padding: 14px; display: flex; flex-direction: column; gap: 10px;
+  padding: 16px; display: flex; flex-direction: column; gap: 12px;
   position: relative; overflow: hidden;
 }
 .side__live::after {
   content: ''; position: absolute; top: -40px; right: -40px; width: 120px; height: 120px;
   border-radius: 50%; background: radial-gradient(circle, rgba(199,242,62,.22), transparent 70%);
+  pointer-events: none;
 }
 .side__live-row { display: flex; align-items: center; gap: 8px; position: relative; z-index: 1; }
+.side__live-url {
+  font-family: var(--display); font-weight: 700; font-size: 15px;
+  color: var(--on-ink); letter-spacing: -0.02em; line-height: 1.35;
+  position: relative; z-index: 1;
+  overflow-wrap: anywhere; word-break: break-word;
+}
 .side__user {
   display: flex; align-items: center; gap: 10px;
   padding: 10px 8px; border-radius: 12px;

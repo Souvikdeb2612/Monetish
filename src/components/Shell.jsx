@@ -41,10 +41,10 @@ function Sidebar({ page }) {
               <span style={{ marginLeft: 4 }}>{state.published ? 'Live' : 'Draft'}</span>
             </span>
           </div>
-          <div style={{ fontFamily: 'var(--display)', fontWeight: 700, fontSize: 16, color: 'var(--on-ink)', letterSpacing: '-0.02em', position: 'relative', zIndex: 1 }}>
+          <div className="side__live-url">
             monetish.bio/{state.profile.username}
           </div>
-          <button className="sk-btn sk-btn--lime sk-btn--sm" style={{ position: 'relative', zIndex: 1 }}
+          <button className="sk-btn sk-btn--lime sk-btn--sm sk-btn--block" style={{ position: 'relative', zIndex: 1 }}
             onClick={() => nav(`/u/${state.profile.username}`)}>
             <Icon name="arrowUR" size={14} sw={2.4} /> View live
           </button>
